@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}通知类型 - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>通知类型</h1>
+    <p class="page-subtitle">通知类型可自定义；删除普通类型后，已有通知会变为「未分类」，「废止 / 替换」联动类型不可删除</p>
+  </div>
+  <button class="btn btn-primary" id="btn-new-type">＋ 新建类型</button>
+</div>
+
+<div class="toolbar">
+  <div class="form-group" style="flex:2;min-width:200px;">
+    <label class="form-label" for="f-keyword">关键词</label>
+    <input class="form-control" type="text" id="f-keyword" placeholder="类型名称">
+  </div>
+  <div class="flex gap-2" style="padding-bottom:2px;">
+    <button class="btn btn-primary" id="btn-search">查询</button>
+    <button class="btn btn-ghost" id="btn-reset">重置</button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>类型名称</th>
+        <th title="含回收站中的通知；删除普通类型后，这些通知会变为未分类">通知数</th>
+        <th style="text-align:right;">操作</th>
+      </tr>
+    </thead>
+    <tbody id="type-tbody">
+      <tr><td colspan="3"><div class="table-empty">加载中…</div></td></tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin/notice_types.js"></script>
+{% endblock %}

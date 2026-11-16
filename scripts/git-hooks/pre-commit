@@ -1,0 +1,42 @@
+#!/bin/sh
+# 提交前快速守门：ruff + mypy（实测合计 < 1 秒）。
+#
+# 为什么不用 pre-push 跑测试：本仓库无 remote，pre-push 永不触发；
+# 且每次提交跑测试必然被 --no-verify 绕过，等于没有。
+# 需要连测试一起跑时：FMS_RUN_TESTS=1 git commit ...
+#   （2026-10-26 并行化后全量 521 用例约 30 秒，见 docs/TESTING.md §一）
+#
+# 安装：bash scripts/git-hooks/install.sh
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+
+PY=".venv/Scripts/python.exe"
+[ -x "$PY" ] || PY=".venv/Scripts/python"
+[ -x "$PY" ] || PY=".venv/bin/python"
+if [ ! -x "$PY" ]; then
+  echo "pre-commit: 找不到 .venv 解释器，跳过检查（请先创建 .venv）" >&2
+  exit 0
+fi
+
+echo "pre-commit: ruff"
+"$PY" -m ruff check || {
+  echo "❌ ruff 未通过，提交已阻止（修好后重试；确需跳过用 --no-verify）" >&2
+  exit 1
+}
+
+echo "pre-commit: mypy"
+"$PY" -m mypy || {
+  echo "❌ mypy 未通过，提交已阻止" >&2
+  exit 1
+}
+
+if [ "${FMS_RUN_TESTS:-0}" = "1" ]; then
+  echo "pre-commit: pytest（FMS_RUN_TESTS=1）"
+  "$PY" -m pytest -q || {
+    echo "❌ 测试未通过，提交已阻止" >&2
+    exit 1
+  }
+fi
+
+echo "pre-commit: OK"

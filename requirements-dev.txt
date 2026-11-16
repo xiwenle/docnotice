@@ -1,0 +1,31 @@
+# 开发/测试依赖（与 requirements.txt 一起安装；不进入生产）
+# 安装：.venv/bin/pip install -r requirements-dev.txt
+# 版本口径：与实际开发环境对齐（Python 3.13 实测，2026-10-25）
+#
+# 说明：
+# - pytest：测试框架（项目规范 §30）
+# - httpx：FastAPI TestClient 依赖（httpx.AsyncClient 亦可用）
+# - freezegun：冻结系统时间，用于时效边界测试（项目规范 §31）
+# - xlwt：生成真实 .xls（第一版文件八先生成器用；读取仍用 xlrd）
+# - playwright：浏览器走查与 E2E 脚本（scripts/ 六件套 + scripts/e2e/；
+#   装后需 `playwright install chromium`）
+# - ruff：lint（配置固化在 pyproject.toml [tool.ruff]）
+# - mypy：类型检查（配置固化在 pyproject.toml [tool.mypy]，只查 app/；
+#   2026-10-25 全仓零错误基线）
+# - pytest-cov：CI 覆盖率报告插件（pytest --cov=app）
+# - pip-audit：依赖漏洞审计（python -m pip_audit -r requirements.txt --no-deps；
+#   2026-10-25 零通告基线，用法见 docs/TESTING.md §七）
+# - pytest-xdist：测试并行（-n auto）。2026-10-26 接入，521 用例 4m05s → 1m21s。
+#   隔离已实测：conftest 顶部用 mkdtemp 建会话级临时目录，xdist 每个 worker 是独立
+#   进程 → 各自 import conftest → 各自 mkdtemp → 各自独立 app.db，不会互相 drop 表。
+
+pytest==9.0.3
+pytest-xdist==3.8.0
+pytest-cov==7.0.0
+httpx==0.28.1
+freezegun==1.5.5
+xlwt==1.3.0
+playwright==1.62.0
+ruff==0.15.12
+mypy==2.4.0
+pip-audit==2.10.1

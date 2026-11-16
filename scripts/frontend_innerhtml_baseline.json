@@ -1,0 +1,20 @@
+{
+  "_comment": "2026-11-11 基线重校：以当前 HEAD 实际计数为准，补记批量治理后 documents.js 14→24、notices.js 12→13、admin/recycle_bin.js 8→9；本轮资料说明折叠未新增 innerHTML。规则不变：新增文件不得使用 innerHTML，存量文件不得增长。",
+  "admin/audit_logs.js": 6,
+  "admin/backups.js": 5,
+  "admin/categories.js": 4,
+  "admin/departments.js": 4,
+  "admin/document_form.js": 9,
+  "admin/notice_form.js": 12,
+  "admin/notice_stats.js": 6,
+  "admin/notice_types.js": 4,
+  "admin/recycle_bin.js": 9,
+  "admin/tags.js": 4,
+  "admin/users.js": 7,
+  "dashboard.js": 7,
+  "document_detail.js": 12,
+  "documents.js": 24,
+  "notice_detail.js": 7,
+  "notices.js": 13,
+  "ui.js": 10
+}

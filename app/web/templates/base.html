@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="icon" href="/static/favicon.ico" sizes="32x32">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  {% if current_user and current_user.must_change_password and not force_password_page %}
+  <meta http-equiv="refresh" content="0; url=/change-password">
+  {% endif %}
+  <link rel="stylesheet" href="/static/css/style.css?v=20261111d">
+  {% block head %}{% endblock %}
+  {# 侧栏折叠态首帧生效（2026-11-03 修抖动）：
+     折叠偏好存在 localStorage，服务端渲染读不到，于是 HTML 先按展开态
+     画 192px，等 nav.js 执行后才补 rail 类——配合 0.2s width 过渡，
+     肉眼就是「先展开、再收缩」。
+     这里在 <body> 解析前同步加类，让首帧直接是最终宽度；同时本帧禁用
+     过渡，杜绝任何可见动画。nav.js 加载后会移除 rail-pending。 #}
+  <script nonce="{{ request.state.csp_nonce }}">
+    (function () {
+      try {
+        if (window.localStorage.getItem("ui.sideRail") === "1") {
+          document.documentElement.classList.add("rail-pending");
+        }
+      } catch (e) { /* 隐私模式下 localStorage 不可读：忽略，按展开态渲染 */ }
+    })();
+  </script>
+  <style nonce="{{ request.state.csp_nonce }}">
+    html.rail-pending .side { transition: none !important; }
+    html.rail-pending body { --side-w: 64px; }
+  </style>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% macro sb_icon(inner) -%}
+  <svg class="sb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ inner|safe }}</svg>
+  {%- endmacro %}
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  {% if current_user %}<script type="application/json" id="user-data">{{ current_user_json|safe }}</script>{% endif %}
+  <div id="app">
+    {# 外壳：左侧栏（03a）+ 面包屑顶条（03b）。
+       2026-09-14 换肤：由「顶栏 + 容器」改为「三栏邮箱式」，导航不再用下拉菜单。
+       高亮由 active_nav 决定（后端按请求路径派生，见 pages.py::_nav_key）。 #}
+    {% block shell %}
+    {% if current_user %}
+    <aside class="side" id="app-side">
+      <div class="sb-brand">
+        <a href="/" title="返回工作台">{{ app_name }}</a>
+        <small>内部资料</small>
+      </div>
+
+      <nav class="sb-nav" aria-label="主导航">
+        <div class="sb-sec">{% if is_admin %}日常操作{% else %}常用{% endif %}</div>
+        <a class="sb-item has-ico {% if active_nav == 'dashboard' %}on{% endif %}"
+           href="/" data-short="工" aria-label="工作台"
+           {% if active_nav == 'dashboard' %}aria-current="page"{% endif %}>
+          {{ sb_icon('<rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/>') }}
+          <span class="lbl">工作台</span>
+        </a>
+        <a class="sb-item has-ico {% if active_nav == 'documents' %}on{% endif %}"
+           href="/documents" data-short="资" aria-label="资料"
+           {% if active_nav == 'documents' %}aria-current="page"{% endif %}>
+          {{ sb_icon('<path d="M3.5 7.5a2 2 0 0 1 2-2h4.2l2 2H18.5a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M3.5 10.5h17"/>') }}
+          <span class="lbl">资料</span>
+        </a>
+        <a class="sb-item has-ico {% if active_nav == 'notices' %}on{% endif %}"
+           href="/notices" data-short="通" aria-label="通知"
+           {% if active_nav == 'notices' %}aria-current="page"{% endif %}>
+          {{ sb_icon('<path d="M18 8.5a6 6 0 1 0-12 0c0 6.5-2.5 6.5-2.5 8.5h17c0-2-2.5-2-2.5-8.5"/><path d="M10 20.5h4"/>') }}
+          <span class="lbl">通知</span>
+        </a>
+
+        {% if is_admin %}
+        {# 2026-11-08：管理员导航按使用频率分层。高频动作直接可见；低频配置
+           与运维入口用原生 details 折叠，当前页所在分组自动展开。路由、
+           active_nav、权限守卫与普通用户三项导航均保持不变。 #}
+        <a class="sb-item has-ico {% if active_nav == 'admin-doc-new' %}on{% endif %}"
+           href="/admin/documents/new" data-short="新资" aria-label="新建资料"
+           {% if active_nav == 'admin-doc-new' %}aria-current="page"{% endif %}>
+          {{ sb_icon('<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v5h5"/><path d="M12 12v5M9.5 14.5h5"/>') }}
+          <span class="lbl">新建资料</span>
+        </a>
+        <a class="sb-item has-ico {% if active_nav == 'admin-notice-new' %}on{% endif %}"
+           href="/admin/notices/new" data-short="新通" aria-label="新建通知"
+           {% if active_nav == 'admin-notice-new' %}aria-current="page"{% endif %}>
+          {{ sb_icon('<path d="M4 10v4h3l7 4V6l-7 4z"/><path d="M17 9a4 4 0 0 1 0 6"/>') }}
+          <span class="lbl">新建通知</span>
+        </a>
+
+        <details class="sb-group" id="sb-group-config" data-sb-group="config"
+                 {% if active_nav in ['admin-categories', 'admin-tags', 'admin-notice-types', 'admin-users', 'admin-departments'] %}open{% endif %}>
+          <summary class="sb-sec" title="基础配置">基础配置</summary>
+          <a class="sb-item has-ico {% if active_nav == 'admin-categories' %}on{% endif %}"
+             href="/admin/categories" data-short="分类" aria-label="分类管理"
+             {% if active_nav == 'admin-categories' %}aria-current="page"{% endif %}>
+            {{ sb_icon('<path d="M5 4.5h5v5H5z"/><path d="M14 3h5v5h-5z"/><path d="M14 16h5v5h-5z"/><path d="M7.5 9.5v8H14"/><path d="M7.5 9.5H14"/>') }}
+            <span class="lbl">分类管理</span>
+          </a>
+          <a class="sb-item has-ico {% if active_nav == 'admin-tags' %}on{% endif %}"
+             href="/admin/tags" data-short="标签" aria-label="标签管理"
+             {% if active_nav == 'admin-tags' %}aria-current="page"{% endif %}>
+            {{ sb_icon('<path d="M3.5 12.5V5a1.5 1.5 0 0 1 1.5-1.5h7.5l8 8-8.5 8.5z"/><circle cx="8" cy="8" r="1.2"/>') }}
+            <span class="lbl">标签管理</span>
+          </a>
+          <a class="sb-item has-ico {% if active_nav == 'admin-notice-types' %}on{% endif %}"
+             href="/admin/notice-types" data-short="类型" aria-label="通知类型"
+             {% if active_nav == 'admin-notice-types' %}aria-current="page"{% endif %}>
+            {{ sb_icon('<path d="M12 3.5 21 8l-9 4.5L3 8z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 16 9 4.5 9-4.5"/>') }}
+            <span class="lbl">通知类型</span>
+          </a>
+          <a class="sb-item has-ico {% if active_nav == 'admin-users' %}on{% endif %}"
+             href="/admin/users" data-short="用户" aria-label="用户管理"
+             {% if active_nav == 'admin-users' %}aria-current="page"{% endif %}>
+            {{ sb_icon('<circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/>') }}
+            <span class="lbl">用户管理</span>
+          </a>
+          <a class="sb-item has-ico {% if active_nav == 'admin-departments' %}on{% endif %}"
+             href="/admin/departments" data-short="部门" aria-label="部门管理"
+             {% if active_nav == 'admin-departments' %}aria-current="page"{% endif %}>
+            {{ sb_icon('<path d="M4 21V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v16"/><path d="M17 9h3v12"/><path d="M8 7h1M12 7h1M8 11h1M12 11h1M8 15h1M12 15h1M9 21v-3h3v3"/>') }}
+            <span class="lbl">部门管理</span>
+          </a>
+        </details>
+
+        <details class="sb-group" id="sb-group-ops" data-sb-group="ops"
+                 {% if active_nav in ['admin-recycle-bin', 'admin-backups', 'admin-audit-logs'] %}open{% endif %}>
+          <summary class="sb-sec" title="系统运维">系统运维</summary>
+          <a class="sb-item has-ico {% if active_nav == 'admin-recycle-bin' %}on{% endif %}"
+             href="/admin/recycle-bin" data-short="回收" aria-label="回收站"
+             {% if active_nav == 'admin-recycle-bin' %}aria-current="page"{% endif %}>
+            {{ sb_icon('<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/>') }}
+            <span class="lbl">回收站</span>
+          </a>
+          <a class="sb-item has-ico {% if active_nav == 'admin-backups' %}on{% endif %}"
+             href="/admin/backups" data-short="备份" aria-label="备份恢复"
+             {% if active_nav == 'admin-backups' %}aria-current="page"{% endif %}>
+            {{ sb_icon('<path d="M3.5 6.5h17v4h-17z"/><path d="M5 10.5V20h14v-9.5"/><path d="M10 14h4"/>') }}
+            <span class="lbl">备份恢复</span>
+          </a>
+          <a class="sb-item has-ico {% if active_nav == 'admin-audit-logs' %}on{% endif %}"
+             href="/admin/audit-logs" data-short="日志" aria-label="操作日志"
+             {% if active_nav == 'admin-audit-logs' %}aria-current="page"{% endif %}>
+            {{ sb_icon('<path d="M7 4h10v16H7z"/><path d="M9 4V2.5h6V4"/><path d="M10 9h4M10 13h4M10 17h3"/>') }}
+            <span class="lbl">操作日志</span>
+          </a>
+        </details>
+        {% endif %}
+      </nav>
+
+      <div class="sb-foot">
+        <div class="nm">
+          <span class="who">{{ current_user.display_name }}</span>
+          <span class="role-tag role-{{ current_user.role }}">
+            {% if current_user.role == 'admin' %}管理员{% else %}普通用户{% endif %}
+          </span>
+        </div>
+        <div class="lg">
+          <button type="button" id="btn-change-password">修改密码</button>
+          <button type="button" id="btn-logout">退出登录</button>
+        </div>
+      </div>
+
+      <button class="sb-collapse" id="sb-collapse" type="button"
+              aria-label="收起或展开侧栏" aria-expanded="true" title="收起 / 展开侧栏">‹</button>
+    </aside>
+    <div class="side-backdrop" id="side-backdrop"></div>
+    {% endif %}
+    {% endblock %}
+
+    <div class="main">
+      {% block crumbbar %}
+      {% if current_user %}
+      <div class="crumbbar">
+        <button class="btn btn-secondary btn-sm menu-btn" id="menu-btn" type="button"
+                aria-label="打开导航" aria-controls="app-side">☰</button>
+        <a href="/">首页</a>
+        {% if nav_section %}
+        <span class="sep">/</span>
+        {% if nav_section.href %}
+        <a href="{{ nav_section.href }}">{{ nav_section.label }}</a>
+        {% else %}
+        <span>{{ nav_section.label }}</span>
+        {% endif %}
+        {% endif %}
+        <span class="sep">/</span>
+        <span class="cur">{{ page_title or app_name }}</span>
+        <div class="cb-right">
+          {# 工作台已有醒目的搜索卡（index.html），此处不重复；其余页面提供快捷搜索。 #}
+          {% if active_nav != 'dashboard' %}
+          <form class="gsearch" id="cb-search" role="search">
+            <input type="search" id="cb-q" placeholder="搜索资料：标题、说明、摘要…"
+                   aria-label="搜索资料" autocomplete="off">
+            <span class="kbd">/</span>
+          </form>
+          <a class="cb-global-link" id="cb-global-link" href="/documents" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+            <span>搜索资料</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      {% endblock %}
+
+      <main class="page-main" id="main-content" tabindex="-1">
+        <div class="container">
+          {% block content %}{% endblock %}
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 全局 Toast 容器 -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <!-- 全局 Modal 容器 -->
+  <div id="modal-root"></div>
+  <!-- 全局加载遮罩 -->
+  <div id="loading-root"></div>
+
+  <script src="/static/js/api.js?v=20261111c"></script>
+  <script src="/static/js/ui.js?v=20261111c"></script>
+  {% if current_user %}<script src="/static/js/nav.js"></script>{% endif %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

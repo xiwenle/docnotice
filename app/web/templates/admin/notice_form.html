@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{% if edit_id %}编辑通知{% else %}新建通知{% endif %} - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header page-header-with-actions">
+  <h1>{% if edit_id %}编辑通知 #{{ edit_id }}{% else %}新建通知{% endif %}</h1>
+  <div class="page-header-actions">
+    {% if edit_id %}<a class="btn btn-secondary" href="/notices/{{ edit_id }}">返回通知详情</a>{% endif %}
+    <a class="btn btn-ghost" href="/notices">返回通知列表</a>
+  </div>
+</div>
+
+<div id="notice-state-banner"></div>
+
+<div class="card">
+  <div class="card-header"><h3 class="card-title">通知内容</h3></div>
+  <div class="card-body">
+    <!-- 通知修改留痕警告 -->
+    <div id="published-warning" class="alert alert-warning hidden">
+      <div>
+        <strong>修改将留痕。</strong>系统会记录修改人、修改时间与修改原因（若已有人员查看，系统强制要求填写原因）。
+        通知禁止直接收窄阅读对象范围。
+      </div>
+    </div>
+    <div id="error-banner"></div>
+
+    <form id="notice-form" novalidate>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="f-title"><span class="required">标题</span></label>
+          <input class="form-control" type="text" id="f-title" maxlength="255" required>
+          <p class="form-error">标题不能为空</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-type">通知类型（可选）</label>
+          <select class="form-control" id="f-type"></select>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="f-content">正文（纯文字，可留空：纯文件通知）</label>
+          <textarea class="form-control" id="f-content" rows="6" placeholder="通知正文……"></textarea>
+          <p class="form-hint">正文和通知文件至少填一项；两者都填也可以。</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-effective-at">生效时间（留空 = 创建即生效）</label>
+          <input class="form-control" type="datetime-local" id="f-effective-at">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-deadline-at">截止时间（可选，留空 = 不截止）</label>
+          <input class="form-control" type="datetime-local" id="f-deadline-at">
+          <p class="form-error">截止时间不能早于生效时间</p>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">通知文件（可选，PDF / DOCX / XLSX / XLS / 图片；保存时随表单上传）</label>
+          <div class="file-upload" id="upload-drop">
+            <span class="flex" style="flex:1;min-width:0;">
+              
+              <span style="flex:1;min-width:0;">
+                <span class="file-name" id="upload-name">点击选择通知文件（可不选）</span>
+                <span class="file-meta" id="upload-meta">{% if edit_id %}编辑时选择新文件将替换原附件{% endif %}</span>
+              </span>
+            </span>
+            <input type="file" id="upload-input" aria-label="选择通知文件" accept=".pdf,.docx,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.webp">
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="doc-search">关联资料（可多选）</label>
+          <input class="form-control" type="text" id="doc-search" aria-label="搜索关联资料" placeholder="搜索资料：标题、说明、摘要…">
+          <div class="check-list mt-2" id="doc-list"></div>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label"><span class="required">阅读对象</span></label>
+          <div class="radio-group">
+            <label class="radio-line"><input type="radio" name="target-scope" value="all" checked> 全体用户</label>
+            <label class="radio-line"><input type="radio" name="target-scope" value="department"> 指定部门</label>
+            <label class="radio-line"><input type="radio" name="target-scope" value="user"> 指定用户</label>
+          </div>
+          <div id="dept-picker" class="hidden mt-2">
+            <input class="form-control" type="text" id="dept-filter" aria-label="筛选部门" placeholder="筛选部门…">
+            <div class="check-list mt-2" id="dept-list"></div>
+          </div>
+          <div id="user-picker" class="hidden mt-2">
+            <input class="form-control" type="text" id="user-filter" aria-label="筛选用户" placeholder="筛选用户…">
+            <div class="check-list mt-2" id="user-list"></div>
+          </div>
+        </div>
+
+        <div class="form-group full" id="reason-box" style="display:none;">
+          <div class="alert alert-warning" style="margin-bottom:0;">
+            <div>
+              <label class="checkbox-line">
+                <input type="checkbox" id="f-confirm-modify">
+                <span><strong>我已了解修改将被记录（修改人/时间/原因）</strong></span>
+              </label>
+              <div class="mt-2">
+                <input class="form-control" type="text" id="f-modify-reason" aria-label="修改原因" maxlength="255"
+                       placeholder="修改原因（保存时将写入审计日志）">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 mt-6 form-actions-sticky">
+        <button type="submit" class="btn btn-primary" id="btn-save">
+          {% if edit_id %}保存修改{% else %}创建通知{% endif %}
+        </button>
+        <a class="btn btn-ghost" href="{% if edit_id %}/notices/{{ edit_id }}{% else %}/notices{% endif %}">取消</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+  window.EDIT_ID = {{ edit_id if edit_id is not none else 'null' }};
+</script>
+<script src="/static/js/admin/notice_form.js?v=20261111e"></script>
+{% endblock %}

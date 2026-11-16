@@ -1,0 +1,13 @@
+# E2E 浏览器自动化依赖（仅开发/CI，可选；生产部署不需要）
+#
+# 本地/CI 已有系统 Chrome 时：
+#   pip install -r requirements-e2e.txt
+#   直接运行 scripts/e2e_full_check.py（默认 channel="chrome"）
+#
+# 无 Chrome 的新机器才需要额外下载 Playwright 浏览器：
+#   python -m playwright install chromium
+#   并设置 E2E_BROWSER_CHANNEL="" 使用 bundled Chromium
+#
+# 版本口径与 requirements-dev.txt 对齐（1.62.0），避免同时安装两份依赖时
+# 把 Playwright 降级/产生解析冲突；公司生产服务器只安装 requirements.txt，不安装本文件。
+playwright==1.62.0

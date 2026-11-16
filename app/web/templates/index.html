@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}工作台 - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>工作台</h1>
+    <p class="page-subtitle">最近资料与通知</p>
+  </div>
+  <div class="flex gap-2">
+    {% if is_admin %}
+    <a class="btn btn-primary" href="/admin/documents/new">＋ 新建资料</a>
+    <a class="btn btn-secondary" href="/admin/notices/new">＋ 新建通知</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 待办条幅：零待办时整条不显示（dashboard.js 控制） -->
+<section class="todo-banner" id="todo-banner" hidden aria-live="polite">
+  <div class="todo-main">
+    <div class="todo-title" id="todo-text"></div>
+    <div class="todo-sub" id="todo-sub">打开通知详情即视为已查看</div>
+  </div>
+  <a class="btn btn-primary btn-lg" id="todo-link" href="/notices?unread_only=1">去查看 →</a>
+</section>
+
+<div id="dashboard-main">
+<!-- 2026-11-03 产品决策：管理员「管理待办」五卡已移除（管理员知道自己该做什么，
+     不做系统代劳的提醒）。上方通知条幅保留——那是「你有 N 条通知未查看」，
+     面向所有用户而非管理待办。 -->
+
+<!-- 全局搜索：员工第一公民 -->
+<form class="search-card" id="global-search">
+  <input class="gs-input" type="search" id="gs-input" placeholder="搜索资料：标题、说明、摘要…" aria-label="搜索资料">
+  <button class="btn btn-primary btn-lg" type="submit">搜索</button>
+</form>
+<p class="search-hint" id="search-hint">不知道关键词？可以<a href="/documents">按分类浏览资料</a></p>
+
+<div class="two-col" id="recent-columns">
+  <!-- 最近资料 -->
+  <div class="card" id="recent-docs-card">
+    <div class="card-header">
+      <h3 class="card-title">最近资料</h3>
+      <a href="/documents" class="text-muted" style="font-size:13px;">查看全部 →</a>
+    </div>
+    <div id="recent-documents" class="card-body" style="padding-top:0;">
+      <div class="skeleton mt-4" style="height:56px;"></div>
+      <div class="skeleton mt-2" style="height:56px;"></div>
+      <div class="skeleton mt-2" style="height:56px;"></div>
+    </div>
+  </div>
+
+  <!-- 最新通知 -->
+  <div class="card" id="recent-notices-card">
+    <div class="card-header">
+      <h3 class="card-title">最新通知</h3>
+      <a href="/notices" class="text-muted" style="font-size:13px;">查看全部 →</a>
+    </div>
+    <div id="recent-notices" class="card-body" style="padding-top:0;">
+      <div class="skeleton mt-4" style="height:56px;"></div>
+      <div class="skeleton mt-2" style="height:56px;"></div>
+      <div class="skeleton mt-2" style="height:56px;"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /dashboard-main -->
+
+<!-- 零数据引导态：资料与通知都为 0 时替代待办卡/空列表 -->
+<section id="dashboard-empty" hidden>
+  <div class="dash-empty-grid">
+    <div class="empty-guide{% if not is_admin %} is-simple{% endif %}">
+      <div class="eg-art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></div>
+      <div class="eg-copy">
+        <p class="eg-kicker">今日状态</p>
+        <h2>今天没有待办</h2>
+        <p>{% if is_admin %}资料库和通知中心还是空的。从第一份资料或第一条通知开始，员工就能在这里看到最新内容。{% else %}目前没有可见的资料或通知。内容由管理员统一维护，如需访问请联系管理员。{% endif %}</p>
+        <div class="eg-actions">
+          {% if is_admin %}
+          <a class="btn btn-primary" href="/admin/documents/new">＋ 新建资料</a>
+          <a class="btn btn-secondary" href="/admin/notices/new">＋ 新建通知</a>
+          <a class="text-muted" href="/admin/categories">先管理分类 →</a>
+          {% else %}
+          <a class="btn btn-secondary" href="/">刷新看看</a>
+          {% endif %}
+        </div>
+      </div>
+      {% if is_admin %}
+      <ol class="eg-steps">
+        <li><span class="n">01</span><div><b>上传文件</b><small>PDF / DOCX / XLSX / XLS / 图片</small></div></li>
+        <li><span class="n">02</span><div><b>设置分类与时效</b><small>员工按目录和有效期查找</small></div></li>
+        <li><span class="n">03</span><div><b>创建通知</b><small>创建后记录查看状态</small></div></li>
+      </ol>
+      {% endif %}
+    </div>
+    <aside class="card dash-health">
+      <div class="card-header"><h3 class="card-title">系统状态</h3><span class="badge badge-success">正常</span></div>
+      <div class="card-body">
+        <dl class="dash-health-list">
+          <div><dt>资料</dt><dd>0 份</dd></div>
+          <div><dt>通知</dt><dd>0 条</dd></div>
+          <div><dt>启用用户</dt><dd>—</dd></div>
+          <div><dt>最近备份</dt><dd>—</dd></div>
+        </dl>
+        {% if is_admin %}<a class="text-muted" href="/admin/backups">查看备份记录 →</a>{% endif %}
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/dashboard.js?v=20261111c"></script>
+{% endblock %}

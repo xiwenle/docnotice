@@ -1,0 +1,60 @@
+name: E2E
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 每周一 02:00 UTC（北京时间 10:00）跑一次全量浏览器回归
+    - cron: "0 2 * * 1"
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Verify system Chrome (no browser download)
+        run: |
+          if command -v google-chrome >/dev/null; then
+            google-chrome --version
+          elif command -v google-chrome-stable >/dev/null; then
+            google-chrome-stable --version
+          else
+            echo "system Chrome not found; this workflow intentionally does not download browsers" >&2
+            exit 1
+          fi
+
+      - name: Seed isolated demo data
+        run: |
+          mkdir -p /tmp/fms_e2e_data
+          DATA_DIR=/tmp/fms_e2e_data APP_ENV=development .venv/bin/python scripts/init_db.py
+          DATA_DIR=/tmp/fms_e2e_data APP_ENV=development .venv/bin/python scripts/seed_demo.py
+          .venv/bin/python scripts/e2e/bootstrap_env.py --no-copy
+
+      - name: Run full E2E (start server in same step)
+        env:
+          E2E_BASE_URL: http://127.0.0.1:8010
+        run: |
+          DATA_DIR=/tmp/fms_e2e_data APP_ENV=development LOGIN_RATE_MAX_ATTEMPTS=5000 \
+            .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8010 --log-level warning &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8010/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8010/health >/dev/null
+          .venv/bin/python scripts/e2e_full_check.py

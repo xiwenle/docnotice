@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}通知 - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 id="notices-page-title" tabindex="-1">通知</h1>
+    {% if is_admin %}<p class="page-subtitle">管理员查看不计入阅读统计；点「阅读统计」查看对象进度。</p>{% else %}<p class="page-subtitle">打开通知详情即视为已查看</p>{% endif %}
+  </div>
+  <div class="flex gap-2">
+    {% if is_admin %}<a class="btn btn-primary" href="/admin/notices/new">＋ 新建通知</a>{% endif %}
+  </div>
+</div>
+
+<!-- 处理视角 tabs：普通用户最高频动作是一等席位；管理员无个人未读概念 -->
+{% if not is_admin %}
+<div class="filter-tabs" id="notice-tabs" role="tablist" aria-label="按处理状态筛选">
+  <button type="button" class="filter-tab active" data-tab="">全部</button>
+  <button type="button" class="filter-tab" data-tab="unread">未读<span class="tab-num" id="tab-unread"></span></button>
+</div>
+{% endif %}
+
+<!-- 搜索 -->
+<div class="search-row">
+  <input class="gs-input" type="search" id="f-keyword" placeholder="搜索通知：标题、正文…" aria-label="搜索通知">
+  <button class="btn btn-primary" id="btn-search">搜索</button>
+  <button class="btn btn-ghost" id="btn-reset">重置</button>
+</div>
+
+<!-- 高级筛选：始终展开，字段标题与控件同一基线 -->
+<section class="adv-filter adv-filter-static" id="adv-filter" aria-labelledby="adv-filter-title">
+  <div class="adv-rail">
+    <div class="adv-heading">
+      <span class="adv-title" id="adv-filter-title">高级筛选</span>
+      <span class="adv-count" id="adv-count" hidden>0</span>
+    </div>
+  </div>
+  <div class="adv-body adv-body-notices">
+    <div class="form-group adv-field">
+      <label class="form-label" for="f-type">通知类型</label>
+      <select class="form-control" id="f-type"><option value="">全部类型</option></select>
+    </div>
+    <div class="form-group adv-field">
+      <label class="form-label" for="f-date-from">创建开始</label>
+      <input class="form-control" type="date" id="f-date-from">
+    </div>
+    <div class="form-group adv-field">
+      <label class="form-label" for="f-date-to">创建结束</label>
+      <input class="form-control" type="date" id="f-date-to">
+    </div>
+  </div>
+</section>
+
+<!-- 已选筛选摘要：来自 URL 状态，点击可单独移除 -->
+<div class="filter-summary" id="notice-filter-summary" hidden aria-live="polite"></div>
+
+{% if is_admin %}
+<div class="bulk-bar" id="notice-bulk-bar" hidden>
+  <span>已选 <strong id="notice-bulk-count">0</strong> 条</span>
+  <label class="flex gap-2" style="align-items:center;">
+    <input type="checkbox" id="notice-check-all" aria-label="全选本页通知"> 全选本页
+  </label>
+  <button type="button" class="btn btn-danger-outline btn-sm" id="btn-notice-bulk-cancel">批量移入回收站</button>
+  <button type="button" class="btn btn-ghost btn-sm" id="btn-notice-bulk-clear">取消选择</button>
+</div>
+<div class="alert alert-info" id="notice-bulk-result" role="status" hidden></div>
+{% endif %}
+
+<div class="notice-card" id="notice-list">
+  <div class="empty-state"><div class="spinner spinner-sm" style="margin:0 auto 8px;"></div><p>加载中…</p></div>
+</div>
+<div id="notices-empty" class="empty-guide" hidden></div>
+<div class="flex-between mb-2">
+  <span id="notice-total" class="text-muted" style="font-size:13px;"></span>
+</div>
+<div class="pagination" id="notice-pagination"></div>
+<span id="notice-result-live" class="sr-only" aria-live="polite"></span>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/notices.js?v=20261111c"></script>
+{% endblock %}

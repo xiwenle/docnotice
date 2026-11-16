@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}{% if edit_id %}编辑资料{% else %}新建资料{% endif %} - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header page-header-with-actions">
+  <h1>{% if edit_id %}编辑资料 #{{ edit_id }}{% else %}新建资料{% endif %}</h1>
+  <div class="page-header-actions">
+    {% if edit_id %}<a class="btn btn-secondary" href="/documents/{{ edit_id }}">返回资料详情</a>{% endif %}
+    <a class="btn btn-ghost" href="/documents">返回资料列表</a>
+  </div>
+</div>
+
+{% if edit_id %}
+<!-- 文件替换区（编辑页） -->
+<div class="card" id="file-card">
+  <div class="card-header"><h3 class="card-title">当前文件 / 替换文件</h3></div>
+  <div class="card-body">
+    <div id="file-info" class="mb-3"><span class="text-muted">加载中… 若尚未上传文件，可在此上传。</span></div>
+    <div class="file-upload" id="upload-drop">
+      <span class="flex" style="flex:1;min-width:0;">
+        
+        <span style="flex:1;min-width:0;">
+          <span class="file-name" id="upload-name">点击选择文件（PDF / DOCX / XLSX / XLS / 图片；多张图片会合成一份多页 PDF）</span>
+          <span class="file-meta">替换文件：旧文件自动进入回收站（不覆盖、不物理删除，版本数 +1）</span>
+        </span>
+      </span>
+      <input type="file" id="upload-input" multiple aria-label="选择要上传的文件" accept=".pdf,.docx,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.webp">
+    </div>
+    <div class="flex gap-2 mt-3">
+      <button class="btn btn-primary" id="upload-submit" disabled>上传 / 替换文件</button>
+      <a class="btn btn-secondary" id="file-download-link" href="#">下载当前文件</a>
+    </div>
+  </div>
+</div>
+{% else %}
+<!-- 文件上传区（新建页，可选：创建时直接带文件，或之后在详情页补传） -->
+<div class="card" id="file-card">
+  <div class="card-header"><h3 class="card-title">文件（可选）</h3></div>
+  <div class="card-body">
+    <div class="file-upload" id="upload-drop">
+      <span class="flex" style="flex:1;min-width:0;">
+        
+        <span style="flex:1;min-width:0;">
+          <span class="file-name" id="upload-name">点击选择文件（PDF / DOCX / XLSX / XLS / 图片；多张图片会合成一份多页 PDF）</span>
+          <span class="file-meta">可以不选，创建后再到详情页补传/替换</span>
+        </span>
+      </span>
+      <input type="file" id="upload-input" multiple aria-label="选择要上传的文件" accept=".pdf,.docx,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.webp">
+    </div>
+
+    <!-- 附件（2026-11-06）：不预览，只供下载；可与主文件不同格式 -->
+    <div class="file-upload mt-4" id="attach-drop">
+      <span class="flex" style="flex:1;min-width:0;">
+        <span style="flex:1;min-width:0;">
+          <span class="file-name" id="attach-name">添加附件（可选：Word / PPT / Excel / PDF / 图片，仅供下载）</span>
+          <span class="file-meta">附件不参与在线预览；可与主文件不同格式，例如主文件传 PDF、附件传 PPTX 原稿</span>
+        </span>
+      </span>
+      <input type="file" id="attach-input" aria-label="选择附件" accept=".pdf,.docx,.xlsx,.xls,.pptx,.jpg,.jpeg,.png,.gif,.webp">
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header"><h3 class="card-title">基本信息</h3></div>
+  <div class="card-body">
+    <div id="conflict-warning" class="alert alert-warning hidden">
+      <div id="conflict-warning-text"></div>
+    </div>
+
+    <form id="doc-form" novalidate>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="f-title"><span class="required">标题</span></label>
+          <input class="form-control" type="text" id="f-title" maxlength="255" required>
+          <p class="form-error">标题不能为空</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-category">分类</label>
+          <select class="form-control" id="f-category"></select>
+          <p class="form-error">分类名称不能为空</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-new-tag">标签（可多选）</label>
+          <div class="tag-select" id="f-tags"></div>
+          <div class="flex gap-2 mt-2">
+            <input class="form-control" type="text" id="f-new-tag" maxlength="50" placeholder="新标签名，回车即创建并选中">
+            <button type="button" class="btn btn-secondary" id="btn-new-tag">＋ 新建</button>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label" for="f-summary">资料说明</label>
+          <textarea class="form-control" id="f-summary" rows="5" maxlength="10000" placeholder="资料用途、适用范围；也可粘贴正文关键词或内容摘要，供搜索使用"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-effective-from"><span class="required">生效日期</span></label>
+          <input class="form-control" type="date" id="f-effective-from" required>
+          <p class="form-error">请选择生效日期</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-effective-to">失效日期（留空 = 暂无失效日期）</label>
+          <input class="form-control" type="date" id="f-effective-to">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">可见范围</label>
+          <div class="radio-group" id="audience-scope-group">
+            <label class="radio-line"><input type="radio" name="audience-scope" value="all" checked> 全体用户</label>
+            <label class="radio-line"><input type="radio" name="audience-scope" value="department"> 指定部门</label>
+            <label class="radio-line"><input type="radio" name="audience-scope" value="user"> 指定人员</label>
+          </div>
+          <p class="text-muted" style="font-size:12px;margin-top:4px;">
+            控制普通用户能否在列表/搜索中看到这份资料；管理员始终可见。
+          </p>
+          <div id="doc-dept-picker" class="hidden mt-2">
+            <input class="form-control" type="text" id="doc-dept-filter" aria-label="筛选部门" placeholder="筛选部门…">
+            <div class="check-list mt-2" id="doc-dept-list"></div>
+          </div>
+          <div id="doc-user-picker" class="hidden mt-2">
+            <input class="form-control" type="text" id="doc-user-filter" aria-label="筛选用户" placeholder="筛选用户…">
+            <div class="check-list mt-2" id="doc-user-list"></div>
+          </div>
+        </div>
+
+        <div class="form-group full" id="overwrite-box" style="display:none;">
+          <div class="alert alert-warning" style="margin-bottom:0;">
+            <div>
+              <label class="checkbox-line">
+                <input type="checkbox" id="f-confirm-overwrite">
+                <span><strong>我已了解：将覆盖该资料既有生效区间</strong>（原区间
+                <span id="old-range"></span>），系统将记录变更审计。</span>
+              </label>
+              <div class="mt-2">
+                <input class="form-control" type="text" id="f-modify-reason" aria-label="修改原因" maxlength="255" placeholder="修改原因（必填，将写入审计日志）">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 mt-6 form-actions-sticky">
+        <button type="submit" class="btn btn-primary" id="btn-submit">
+          {% if edit_id %}保存修改{% else %}创建资料{% endif %}
+        </button>
+        <a class="btn btn-secondary" href="{% if edit_id %}/documents/{{ edit_id }}{% else %}/documents{% endif %}">取消</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+  window.EDIT_ID = {{ edit_id if edit_id is not none else 'null' }};
+</script>
+<script src="/static/js/admin/document_form.js?v=20261111c"></script>
+{% endblock %}

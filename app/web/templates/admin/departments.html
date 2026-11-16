@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}部门管理 - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>部门管理</h1>
+  <button class="btn btn-primary" id="btn-new-dept">＋ 新建部门</button>
+</div>
+
+<div class="toolbar">
+  <div class="form-group" style="flex:2;min-width:200px;">
+    <label class="form-label" for="f-keyword">关键词</label>
+    <input class="form-control" type="text" id="f-keyword" placeholder="部门名称">
+  </div>
+  <div class="flex gap-2" style="padding-bottom:2px;">
+    <button class="btn btn-primary" id="btn-search">查询</button>
+    <button class="btn btn-ghost" id="btn-reset">重置</button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>部门名称</th>
+        <th>说明</th>
+        <th title="只计启用用户；删除部门后成员会变为未分配部门">成员数</th>
+        <th style="text-align:right;">操作</th>
+      </tr>
+    </thead>
+    <tbody id="dept-tbody">
+      <tr><td colspan="4"><div class="table-empty">加载中…</div></td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="pagination" id="dept-pagination"></div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin/departments.js"></script>
+{% endblock %}

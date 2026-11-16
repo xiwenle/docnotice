@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}标签管理 - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>标签管理</h1>
+  <button class="btn btn-primary" id="btn-new-tag">＋ 新建标签</button>
+</div>
+
+<div class="toolbar">
+  <div class="form-group" style="flex:2;min-width:200px;">
+    <label class="form-label" for="f-keyword">关键词</label>
+    <input class="form-control" type="text" id="f-keyword" placeholder="标签名称">
+  </div>
+  <div class="flex gap-2" style="padding-bottom:2px;">
+    <button class="btn btn-primary" id="btn-search">查询</button>
+    <button class="btn btn-ghost" id="btn-reset">重置</button>
+  </div>
+</div>
+
+<div class="alert alert-info">
+  <span>标签是资料的辅助词表。删除标签会解除资料与该标签的关联，资料会进入「未打标签」状态；资料分类、文件、附件、通知和通知类型都不会删除。</span>
+</div>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>标签名称</th>
+        <th>引用资料数</th>
+        <th style="text-align:right;">操作</th>
+      </tr>
+    </thead>
+    <tbody id="tag-tbody">
+      <tr><td colspan="3"><div class="table-empty">加载中…</div></td></tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin/tags.js"></script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}资料详情 - {{ app_name }}{% endblock %}
+{% block content %}
+<nav class="detail-back-nav" aria-label="返回导航">
+  <a class="btn btn-secondary btn-sm detail-return-link" id="btn-return-list"
+     href="{{ return_to }}" data-return-scroll="1">‹ 返回资料列表</a>
+  <span id="bc-title" class="sr-only">详情</span>
+</nav>
+
+<div id="detail-root">
+  <div class="card">
+    <div class="card-body">
+      <div class="skeleton" style="height:32px;width:60%;"></div>
+      <div class="skeleton mt-3" style="height:16px;width:40%;"></div>
+      <div class="skeleton mt-3" style="height:80px;"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+  window.DOC_ID = {{ doc_id }};
+  window.MAX_UPLOAD_MB = {{ max_upload_mb | default(50) }};
+</script>
+<script src="/static/js/document_detail.js?v=20261111d"></script>
+{% endblock %}

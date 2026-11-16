@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}阅读统计 - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header page-header-with-actions">
+  <h1>阅读统计</h1>
+  <div class="page-header-actions">
+    <a class="btn btn-secondary" href="/notices/{{ notice_id }}">返回通知详情</a>
+    <a class="btn btn-ghost" href="/notices">返回通知列表</a>
+  </div>
+</div>
+
+<div id="stats-root">
+  <div class="card"><div class="card-body"><div class="skeleton" style="height:80px;"></div></div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+  window.NOTICE_ID = {{ notice_id }};
+</script>
+<script src="/static/js/admin/notice_stats.js?v=20261111c"></script>
+{% endblock %}

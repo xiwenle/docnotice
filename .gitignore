@@ -1,0 +1,103 @@
+# ---- 依赖与虚拟环境 ----
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- pytest-cov / coverage 本地生成物 ----
+.coverage
+coverage.xml
+htmlcov/
+
+# ---- 业务数据（数据与程序分离，绝不提交 Git，项目规范 §7）----
+data/
+
+# ---- 本地环境配置（真实密钥不入库，§29）----
+.env
+
+# ---- IDE / 系统 ----
+.idea/
+.vscode/
+.DS_Store
+
+# ---- 日志与临时文件 ----
+*.log
+*.pid
+
+# ---- pip / pytest 临时目录（TEMP 不可写时会落在仓库根，2026-10-26 加）----
+pip-build-tracker-*/
+pip-unpack-*/
+pip-install-*/
+pip-metadata-*/
+pip-ephem-wheel-cache-*/
+pytest-of-*/
+e2e-pdf-*/
+edgecases-pdf-*/
+tmpx*/
+
+# ---- Agent 工作目录 ----
+.agent-teams/
+_perf_compare_*/
+_perf_compare_*
+
+# ---- 本地验证截图（docs/VERIFICATION.md 引用的本地证据，不入库）----
+screenshots/
+
+# ---- DEMO 种子清单（运行时生成，指向本地库的 id，不入库）----
+scripts/seed_demo_manifest.json
+.a11y_session.json
+
+# ---- 本地审计/验证工具运行目录（2026-08-31 评审遗留，不入库）----
+.lh-harness/
+# mimosa 安全扫描插件的本地运行目录（2026-10-25 加，同上不入库）
+.mimosa/
+
+# ---- GUI 验证截图（2026-09-03 浏览器验证证据，本地留存不入库）----
+gui-test-screenshots/
+
+# ---- 设计参照稿（本地留存，不入库）----
+# prototypes/ 是设计语言来源，含静态参照稿与样张，属本地交接材料。
+# 设计令牌本身已单独提取到 docs/design-tokens/ 入库。
+prototypes/
+
+# ---- 环境配置变体（只忽略真实配置，保留 .env.example 模板，§29）----
+.env.*
+!.env.example
+
+# ---- 数据库文件（正常应位于 data/ 下，此处兜底防误提交）----
+*.db
+*.sqlite
+
+# ---- 配色参考稿的本地渲染截图（验证证据，不入库；用 _shots.py 可一键重生成）----
+prototypes/**/shots/
+
+# ---- 一次性本地清理脚本（本人手动执行，不入库）----
+清理垃圾-*.command
+清理清单-*.md
+
+# ---- 演示数据归档（本地留存，不入库，2026-10-29）----
+data-archive/
+
+# ---- 本地生成的部署包 ----
+release/
+
+# ---- 本地审计/走查证据与迁移交接说明（不进入仓库）----
+_agent_*/
+MIGRATION_README_*.txt
+_agent_full_matrix_*/
+_agent_ego_*/
+
+# ---- 内部交接与审计文档（本地留存，不入库；公开仓库不含这些）----
+# 这些是团队内部的工作记录与决策过程，公开仓库只保留产品文档。
+AGENTS.md
+AGENT_INDEX.md
+AGENT_CONTEXT_SNAPSHOT.md
+HANDOFF.md
+docs/history/
+docs/变更确认单-*.md
+docs/ACCEPTANCE_RUNBOOK.md
+docs/FULL_MATRIX_2026-11-11.md
+docs/FULL_MATRIX_2026-11-11-summary.json

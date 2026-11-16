@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}分类管理 - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>分类管理</h1>
+  <div class="flex gap-2">
+    <button type="button" class="btn btn-sm btn-secondary" id="btn-toggle-tree">展开全部 ▾</button>
+    <button class="btn btn-primary" id="btn-new-root">＋ 新建一级分类</button>
+  </div>
+</div>
+
+<div class="alert alert-info">
+  <span>分类最多四级，可逐级建立子分类。分类后的资料数含其全部下级分类（文件夹语义）。删除前会确认；删除父分类会同时删除整棵子树；树内所有资料（含已归档）自动变为「未分类」；资料、文件、附件、标签、通知和通知类型均不会删除。</span>
+</div>
+
+<div class="card">
+  <div id="cat-tree" style="min-height:100px;">
+    <div class="empty-state"><div class="spinner spinner-sm" style="margin:0 auto 8px;"></div><p>加载中…</p></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin/categories.js"></script>
+{% endblock %}

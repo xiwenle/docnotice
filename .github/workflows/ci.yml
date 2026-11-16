@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint
+        run: python -m ruff check
+
+      - name: Frontend debt guard
+        run: python scripts/frontend_debt_check.py
+
+      - name: Type check
+        run: python -m mypy
+
+      # 2026-10-19：剩余 14 条 advisory 在当前镜像/FastAPI 版本下无修复版本，
+      # 可达性评估见 docs/SECURITY.md；保留可见性但不让流水线常红。
+      - name: Dependency audit (non-blocking)
+        continue-on-error: true
+        run: python -m pip_audit -r requirements.txt --no-deps
+
+      - name: Tests (with coverage report)
+        run: python -m pytest -q --cov=app --cov-report=term-missing

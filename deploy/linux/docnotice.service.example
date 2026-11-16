@@ -1,0 +1,18 @@
+[Unit]
+Description=Company Doc & Notice System
+After=network.target
+
+[Service]
+Type=simple
+User=docnotice
+Group=docnotice
+WorkingDirectory=/srv/docnotice
+EnvironmentFile=/srv/docnotice/.env
+ExecStart=/srv/docnotice/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}回收站 - {{ app_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>回收站</h1>
+  <button class="btn btn-danger-outline" id="btn-purge-all" hidden>清空回收站</button>
+</div>
+
+<div class="alert alert-info">
+  <span>回收站保存被替换/归档/删除的文件副本与已删除通知。永久删除仅管理员可执行且需二次确认。</span>
+</div>
+
+<!-- 已删除通知 -->
+<div class="card" style="margin-bottom:var(--sp-5);">
+  <div class="card-header">
+    <h3 class="card-title">已删除通知</h3>
+    <span id="notice-rb-count" class="text-muted" style="font-size:13px;">加载中…</span>
+  </div>
+  <div class="card-body" style="padding-bottom:0;">
+    <div class="bulk-bar" id="notice-rb-bulk-bar" hidden>
+      <span>已选 <strong id="notice-rb-bulk-count">0</strong> 条</span>
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-notice-rb-bulk-restore">批量恢复</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btn-notice-rb-bulk-clear">取消选择</button>
+    </div>
+    <div class="alert alert-info" id="notice-rb-bulk-result" role="status" hidden></div>
+  </div>
+  <div class="table-wrap" style="border:none;border-radius:0;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:36px;"><input type="checkbox" id="notice-rb-check-all" aria-label="全选已删除通知"></th>
+          <th>标题</th>
+          <th>类型</th>
+          <th>原创建时间</th>
+          <th>删除原因</th>
+          <th>已读</th>
+          <th style="text-align:right;">操作</th>
+        </tr>
+      </thead>
+      <tbody id="notice-rb-tbody">
+        <tr><td colspan="7"><div class="table-empty">加载中…</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 已删除文件 -->
+<div class="toolbar">
+  <div class="form-group">
+    <label class="form-label" for="f-reason">原因类型</label>
+    <select class="form-control" id="f-reason">
+      <option value="">全部</option>
+      <option value="replaced">文件被替换</option>
+      <option value="archived">资料归档</option>
+      <option value="deleted">资料删除</option>
+      <option value="attachment_deleted">删除附件</option>
+    </select>
+  </div>
+  <div class="flex gap-2" style="padding-bottom:2px;">
+    <button class="btn btn-primary" id="btn-search">查询</button>
+    <button class="btn btn-ghost" id="btn-reset">重置</button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>原文件名</th>
+        <th>所属资料</th>
+        <th>原因</th>
+        <th>大小</th>
+        <th>类型</th>
+        <th>删除人 / 时间</th>
+        <th style="text-align:right;">操作</th>
+      </tr>
+    </thead>
+    <tbody id="rb-tbody">
+      <tr><td colspan="7"><div class="table-empty">加载中…</div></td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="pagination" id="rb-pagination"></div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin/recycle_bin.js"></script>
+{% endblock %}

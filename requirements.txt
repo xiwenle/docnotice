@@ -1,0 +1,51 @@
+# 公司内部资料与通知管理系统 —— Python 依赖（应用运行时，Python 3.10+）
+# 安装：python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+# 或：uv venv .venv && uv pip install -r requirements.txt
+#
+# 运行时下限：**Python 3.10+**（2026-10-25 依赖安全升级后由 3.9 抬升——
+# fastapi 0.133 / starlette 1.3 / pydantic-settings / python-multipart / uvicorn
+# 的 Requires-Python 均 >=3.10 实测；代码本身无 3.10+ 语法，开发机为 3.13.7）。
+# 版本口径（2026-10-25 定稿）：pip-audit 零通告 + 全量 521 条测试 PASS 的组合。
+# 背景：原 .venv（3.9.12）已不存在，系统 Python 3.13.7 环境与旧 pin 双向漂移
+# （prod 7 处 + dev 2 处），且漂移环境带 51 条已知漏洞通告（starlette/pyjwt/
+# python-multipart/jinja2/cryptography/pypdf）。处置：能原地修的升到修复线
+# （cryptography 50.0.1、pypdf 6.21.2、PyJWT 2.15.0、Jinja2 3.1.6、
+# python-multipart 0.0.31）；fastapi 0.128.8→0.133.1（第一个不封顶 starlette 的
+# 版本，最小跳距）以带入 starlette 1.3.1——PYSEC-2026-161（Host 头污染
+# request.url.path 绕过路径类安全检查）对本系统改密闸门白名单是真实威胁面。
+# - starlette：app/ 直接 import（4 处），此前靠 fastapi 传递依赖偶然满足，显式声明
+# - aiofiles 已删除（2026-10-25）：全仓 0 处 import，确认为死依赖
+#
+# 说明：
+# - passlib[bcrypt] 为密码哈希（bcrypt 后端；bcrypt 固定 4.0.1：
+#   bcrypt>=5.0 移除了 __about__ 且改变 72 字节截断行为，passlib 1.7.4 会后端加载失败）
+# - python-docx / openpyxl / xlrd / pypdf：DOCX / XLSX / XLS / PDF 处理与预览
+#   （pypdf 2026-10-25 由 6.16.2 升至 6.21.2：pip-audit 实测两条 CVE-2026-115580/115585，
+#   修复线 6.21.2；2026-11-03 再升至 6.21.4：pip-audit 实测 6.21.2 带 7 条
+#   CVE-2026-119203~119209（修复线 6.21.3/6.21.4），文件/资料相关测试复验通过）
+# - python-multipart：文件上传解析
+# - cryptography / httpx：JWT RS256 验签能力与 HTTP 客户端
+#   （cryptography 为 PyJWT 的可选 RS256 后端；httpx 用于浏览器回归脚本）
+#   cryptography 锁 50.0.1：2026-10-25 pip-audit 实测 46.x 带 5 条 PYSEC/GHSA 通告
+#   （修复线最高至 50.0.0）；曾因环境漂移被降到 46.0.6，已升级回安全版本
+
+fastapi==0.133.1
+starlette==1.3.1
+uvicorn==0.46.0
+SQLAlchemy==2.0.52
+pydantic==2.13.4
+pydantic-settings==2.15.0
+python-multipart==0.0.31
+Jinja2==3.1.6
+PyJWT==2.15.0
+passlib==1.7.4
+bcrypt==4.0.1
+python-docx==1.2.0
+openpyxl==3.1.5
+xlrd==2.0.2
+pypdf==6.21.4
+# Pillow（2026-11-04）：多图上传时合成一份多页 PDF（每张一页）。
+# 仅用于合并路径（单图仍只做魔数校验），不参与其它业务。
+pillow==13.0.0
+cryptography==50.0.1
+httpx==0.28.1

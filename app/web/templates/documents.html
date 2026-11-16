@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}资料列表 - {{ app_name }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/static/css/documents-batch.css?v=20261111c">
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 id="docs-page-title" tabindex="-1">资料</h1>
+    <p class="page-subtitle">标记「已过期」的资料请停止使用</p>
+  </div>
+  <div class="flex gap-2">
+    {% if is_admin %}
+    <a class="btn btn-primary" href="/admin/documents/new">＋ 新建资料</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="docs-layout">
+  <!-- 左侧分类导航：默认逐级下钻，可切换为展开全树（只展开文件夹） -->
+  <aside class="category-sidebar cat-collapsible" id="category-sidebar">
+    <div class="sidebar-header">
+      <button type="button" class="cat-toggle" id="btn-cat-toggle" aria-expanded="false" aria-controls="category-tree">分类目录</button>
+      <div class="view-switch" role="group" aria-label="分类导航视图">
+        <button id="btn-view-drill" class="on" type="button" aria-pressed="true">逐级下钻</button>
+        <button id="btn-view-tree" type="button" aria-pressed="false">展开全树</button>
+      </div>
+    </div>
+    <div class="tree-toolbar" id="tree-toolbar" hidden>
+      <span>全部文件夹</span>
+      <button type="button" class="tree-expand-btn" id="btn-expand-all">展开全部 ▾</button>
+    </div>
+
+    <div class="cat-search-wrap" id="cat-search-wrap">
+      <svg class="cat-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5L14 14"></path>
+      </svg>
+      <input class="cat-search" id="cat-search" type="search" placeholder="搜索分类或路径…"
+             aria-label="搜索分类" autocomplete="off" spellcheck="false">
+      <kbd class="cat-search-kbd" aria-hidden="true">/</kbd>
+      <button class="cat-search-clear" id="cat-search-clear" type="button" aria-label="清除搜索">×</button>
+    </div>
+
+    <div class="cat-scroll">
+      <nav id="category-tree" class="cat-nav" aria-label="分类导航">
+        <div class="tree-loading">加载中…</div>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <span id="footer-cats">—</span>
+      <span class="dot" aria-hidden="true"></span>
+      <span id="footer-docs">—</span>
+    </div>
+    <span class="sr-only" id="cat-live" aria-live="polite"></span>
+  </aside>
+
+  <!-- 右侧主区 -->
+  <div class="docs-main">
+    <!-- 主筛选：搜索 -->
+    <div class="search-row">
+      <input class="gs-input" type="search" id="f-keyword" placeholder="搜索资料：标题、说明、摘要…" aria-label="搜索资料">
+      <button class="btn btn-primary" id="btn-search">搜索</button>
+      <button class="btn btn-ghost" id="btn-reset">重置</button>
+    </div>
+
+    <!-- 高级筛选：始终展开，字段标题与控件同一基线 -->
+    <section class="adv-filter adv-filter-static" id="adv-filter" aria-labelledby="adv-filter-title">
+      <div class="adv-rail">
+        <div class="adv-heading">
+          <span class="adv-title" id="adv-filter-title">高级筛选</span>
+          <span class="adv-count" id="adv-count" hidden>0</span>
+        </div>
+      </div>
+      <div class="adv-body adv-body-documents{% if is_admin %} adv-body-documents-admin{% endif %}">
+        <div class="form-group adv-field">
+          <label class="form-label" for="f-tag">标签</label>
+          <select class="form-control" id="f-tag"></select>
+        </div>
+        <div class="form-group adv-field">
+          <label class="form-label" for="f-cover-from">生效开始</label>
+          <input class="form-control" type="date" id="f-cover-from">
+        </div>
+        <div class="form-group adv-field">
+          <label class="form-label" for="f-cover-to">生效结束</label>
+          <input class="form-control" type="date" id="f-cover-to">
+        </div>
+        <div class="form-group adv-field">
+          <label class="form-label" for="f-sort">排序</label>
+          <select class="form-control" id="f-sort">
+            <option value="id_desc">最新创建</option>
+            <option value="updated_desc">最近更新</option>
+            <option value="created_desc">创建时间</option>
+            <option value="title_asc">标题 A–Z</option>
+            <option value="effective_from_desc">生效开始（新→旧）</option>
+            <option value="effective_to_asc">失效日期（近→远）</option>
+          </select>
+        </div>
+        <div class="form-group adv-field">
+          <label class="form-label" for="f-page-size">每页</label>
+          <select class="form-control" id="f-page-size">
+            <option value="15">15 条</option>
+            <option value="30">30 条</option>
+            <option value="50">50 条</option>
+            <option value="100">100 条</option>
+          </select>
+        </div>
+        {% if is_admin %}
+        <div class="form-group adv-field">
+          <label class="form-label" for="f-audience-scope">可见范围</label>
+          <select class="form-control" id="f-audience-scope">
+            <option value="">全部范围</option>
+            <option value="all">全体可见</option>
+            <option value="department">指定部门</option>
+            <option value="user">指定人员</option>
+          </select>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- 状态标签页 -->
+    <div class="filter-tabs" id="doc-status-tabs" role="tablist" aria-label="按资料状态筛选">
+      <button type="button" class="filter-tab active" data-status="">全部</button>
+      <button type="button" class="filter-tab" data-status="pending">未生效</button>
+      <button type="button" class="filter-tab" data-status="active">生效中</button>
+      <button type="button" class="filter-tab" data-status="expired">已过期</button>
+      {% if is_admin %}
+      <button type="button" class="filter-tab" data-status="archived" title="已删除的资料（回收站中可恢复）">已删除</button>
+      {% endif %}
+      <!-- 未分类对所有登录用户开放：入口不是权限边界，
+           里面每份资料能否打开仍由该资料的阅读对象决定 -->
+      <span style="flex:1;"></span>
+      <button type="button" class="filter-tab" data-organize="uncategorized" title="没有归入任何分类的资料">仅看未分类</button>
+      {% if is_admin %}
+      <button type="button" class="filter-tab" data-organize="untagged" title="找出没有标签的资料，便于批量整理">仅看未打标签</button>
+      {% endif %}
+    </div>
+
+    <!-- 已选筛选摘要：来自 URL 状态，点击可单独移除 -->
+    <div class="filter-summary" id="doc-filter-summary" hidden aria-live="polite"></div>
+
+    {% if is_admin %}
+    <!-- 批量操作条：本页选择与当前筛选全选共用同一选择模型 -->
+    <div class="bulk-bar" id="doc-bulk-bar" hidden>
+      <div class="bulk-selection-copy">
+        <span>已选 <strong id="bulk-count-num">0</strong> 条</span>
+        <span class="bulk-breakdown">本页 <b id="bulk-page-count">0</b> · 其他页 <b id="bulk-other-count">0</b></span>
+        <span class="bulk-mode-label" id="bulk-mode-label" hidden>当前筛选全部</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="btn-bulk-select-all" type="button">选择当前筛选全部</button>
+      <span class="bulk-spacer"></span>
+      <button class="btn btn-ghost btn-sm" id="btn-bulk-clear" type="button">清空选择</button>
+      <button class="btn btn-primary btn-sm" id="btn-bulk-open" type="button">批量操作</button>
+    </div>
+    {% endif %}
+
+    <div class="table-wrap docs-table-wrap">
+      <table class="table table-fixed">
+        <!-- 列宽显式声明：table-layout:auto 会忽略 th 的 width/min-width，
+             结果是复选框列被撑到 86px、标题列被挤窄、整表横向溢出容器。 -->
+        <colgroup>
+          {% if is_admin %}<col style="width:36px;">{% endif %}
+          <col>
+          <!-- 生效区间：2026-09-29 由 180px 放宽到 204px。
+               实测「2025-08-02 ~ 2026-08-07」这类完整闭区间需要 193~196px，
+               180px 下会被 text-overflow:ellipsis 截成「2025-08-02 ~ 2026-0…」——
+               把**失效日**吃掉了，而 DESIGN.md 要求"时效状态是资料展示的第一视觉属性"。
+               列宽从标题列（auto）匀出 24px，标题列仍有 ~350px，不触发换行。 -->
+          <col style="width:204px;">
+          <col style="width:140px;">
+          <!-- 2026-11-03：文件列 80 → 96px。80px 时可用内容宽仅 54px
+               （左右 padding 各 13px），而 DOCX 徽章需 55.4px，会被
+               text-overflow:ellipsis 截成「DOCX …」。 -->
+          <col style="width:96px;">
+          <col style="width:96px;">
+        </colgroup>
+        <thead>
+          <tr>
+            {% if is_admin %}<th style="width:36px;"><input type="checkbox" id="doc-check-all" aria-label="全选本页"></th>{% endif %}
+            <th style="min-width:240px;">标题</th>
+            <th>生效区间</th>
+            <th>状态</th>
+            <th>文件</th>
+            <th style="text-align:right;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="doc-tbody">
+          <!-- colspan 随列数走：普通用户没有选择列 → 5 列 -->
+          <tr><td colspan="{{ 6 if is_admin else 5 }}"><div class="table-empty">加载中…</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="docs-empty" class="empty-guide" hidden></div>
+    <div class="pagination" id="doc-pagination"></div>
+    <span id="doc-result-live" class="sr-only" aria-live="polite"></span>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/documents.js?v=20261111c"></script>
+{% endblock %}
